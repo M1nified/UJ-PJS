@@ -17,33 +17,50 @@ if ( $? != 0 ) then
 	exit 2
 endif
 
-switch ("$3")
-	case '\+':
-		@ result = $1 + $2
-		breaksw;
-	case '-':
-		@ result = $1 - $2
-		breaksw;
-	case '[\\*]':
-		@ result = $1 * $2
-		breaksw;
-	case '/':
-		@ result = $1 / $2
-		breaksw;
-	case '[\\^]':
-		@ result = $1
-		@ base = $result
-		@ step = 1
-		while ( $step < $2 )
-			@ result *= $base
-			@ step++
-		end
-		breaksw;
-	case '[%%]':
-		@ result = $1 % $2
-		breaksw;
-	default:
-		echo "'$3' operator is not supported"
-endsw
-echo $result
+set from = $1
+set to = $2
+
+if ( $to < $from ) then
+	@ tmp = $to
+	@ to = $from
+	@ from = $tmp
+endif
+
+foreach a (`seq $from $to`)
+	foreach b (`seq $from $to`)
+
+		switch ("$3")
+			case '\+':
+				@ result = $a + $b
+				breaksw;
+			case '-':
+				@ result = $a - $b
+				breaksw;
+			case '[\\*]':
+				@ result = $a * $b
+				breaksw;
+			case '/':
+				@ result = $a / $b
+				breaksw;
+			case '[\\^]':
+				@ result = $a
+				@ base = $result
+				@ step = 1
+				while ( $step < $b )
+					@ result *= $base
+					@ step++
+				end
+				breaksw;
+			case '[%%]':
+				@ result = $a % $b
+				breaksw;
+			default:
+				echo "'$3' operator is not supported"
+				exit 4
+		endsw
+		echo -n "$a $3 $b = $result\t"
+
+	end
+	echo
+end
 

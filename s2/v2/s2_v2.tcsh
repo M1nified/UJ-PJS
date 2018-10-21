@@ -17,8 +17,17 @@ if ( $? !~ 0 ) then
 	exit 2
 endif
 
-foreach a (`seq $1 $2`)
-	foreach b (`seq $1 $2`)
+set from = $1
+set to = $2
+
+if ( $to < $from ) then
+	@ tmp = $to
+	@ to = $from
+	@ from = $tmp
+endif
+
+foreach a (`seq $from $to`)
+	foreach b (`seq $from $to`)
 		@ tmp = $a * $b
 		echo -n "$a x $b = $tmp\t"
 	end

@@ -15,17 +15,31 @@ if ! [[ $2 =~ ^[\+-]?[0-9]+$ ]]; then
 	exit 2;
 fi	
 
-case $3 in
-	+)
-		echo $(($1 + $2)) ;;
-	-)
-		echo $(($1 - $2)) ;;
-	\*)
-		echo $(($1 * $2)) ;;
-	/)
-		echo $(($1 / $2)) ;;
-	^)
-		echo $(($1 ** $2)) ;;
-	%)
-		echo $(($1 % $2)) ;;
-esac
+from=$1
+to=$2
+
+if [[ $to < $from ]] ; then
+	tmp=$to
+	to=$from
+	from=$tmp
+fi
+
+for a in $(seq $from $to) ; do for b in $(seq $from $to); do
+
+	case $3 in
+		+)
+			echo -en "$a + $b = $(($a + $b))\t" ;;
+		-)
+			echo -en "$a - $b = $(($a - $b))\t" ;;
+		\*)
+			echo -en "$a * $b = $(($a * $b))\t" ;;
+		/)
+			echo -en "$a / $b = $(($a / $b))\t" ;;
+		^)
+			echo -en "$a ^ $b = $(($a ** $b))\t" ;;
+		%)
+			echo -en "$a % $b = $(($a % $b))\t" ;;
+	esac
+
+done; echo; done
+

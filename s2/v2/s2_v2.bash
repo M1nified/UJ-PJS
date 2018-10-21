@@ -15,6 +15,15 @@ if ! [[ $2 =~ ^[+-]?[0-9]+$ ]]; then
 	exit 2;
 fi
 
-for a in $(seq $1 $2); do for b in $(seq $1 $2); do
+from=$1
+to=$2
+
+if [[ $to < $from ]]; then
+	tmp=$to
+	to=$from
+	from=$tmp
+fi
+
+for a in $(seq $from $to); do for b in $(seq $from $to); do
 	echo -en "$a x $b = $(($a*$b))\t";
 done; echo; done

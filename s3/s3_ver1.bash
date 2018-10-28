@@ -66,7 +66,7 @@ is_connected=1
 # 	fi
 # done
 
-def_gate=$(ip r | grep default | cut -d ' ' -f 4)
+def_gate=$(ip r | grep default | grep -o -e '\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}')
 ping -c 1 -W 2 $def_gate > /dev/null
 ping_status=$?
 if [[ "$ping_status" -eq "0" ]] ; then

@@ -20,7 +20,7 @@ set is_connected = 1
 #     endif
 # end
 
-set def_gate = `ip r | grep default | cut -d ' ' -f 4`
+set def_gate = `ip r | grep default | grep -o -e '\([0-9]\{1,3\}\.\)\{3\}[0-9]\{1,3\}'`
 ping -c 1 -W 2 -q $def_gate > /dev/null
 set ping_status = $?
 if ($ping_status == 0) then

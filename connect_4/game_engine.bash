@@ -5,39 +5,24 @@ declare -g -A board
 player_1_mark="a"
 player_2_mark="b"
 
+x_max=6
+y_max=5
+
 function display_board {
-    echo -n '|'
-    for x in {1..7}; do
-        echo -n "--"
-    done
-    echo '-|'
-    echo -n '|'
-    for x in {1..7}; do
-        echo -n " $x"
-    done
-    echo ' |'
-    for y in {0..5}; do
-        echo -n '|'
-        for x in {0..6}; do
-            echo -n " ${board[$x,$y]}"
+    # ()
+    echo -e "board:7:6:"
+    for y in $(seq 0 $y_max); do
+        for x in $(seq 0 $x_max); do
+            echo -n "${board[$x,$y]}:"
         done
-        echo ' |'
+        echo
     done
-    echo -n '|'
-    for x in {1..7}; do
-        echo -n " $x"
-    done
-    echo ' |'
-    echo -n '|'
-    for x in {1..7}; do
-        echo -n "--"
-    done
-    echo '-|'
 }
 
 function empty_board {
-    for y in {0..5}; do
-        for x in {0..6}; do 
+    # ()
+    for y in $(seq 0 $y_max); do
+        for x in $(seq 0 $x_max); do 
             board[$x,$y]=' '
         done
     done
@@ -65,7 +50,7 @@ function get_col {
 function drop_in {
     # (col_number, value)
     local col_number=$1
-    local y=5
+    local y=$y_max
     while [[ ${board[$col_number,$y]} != " " && $y -ge 0 ]]; do
         y=$(($y-1))
     done
@@ -82,7 +67,7 @@ function count_line {
     local x=$2
     local y=$3
     local mark=$4
-    if [[ $x < 0 || $x > 6 || $y < 0 || $y > 5 ]] ; then
+    if [[ $x < 0 || $x > $x_max || $y < 0 || $y > $y_max ]] ; then
         return 0
     fi
     if [[ ${board[$x,$y]} == $mark ]] ; then
@@ -119,8 +104,8 @@ function count_line {
 function check_for_win {
     local mark=$1
     local win_length=4
-    for x in {0..6} ; do
-        for y in {0..5} ; do
+    for x in $(seq 0 $x_max) ; do
+        for y in $(seq 0 $y_max) ; do
             if [[ ${board[$x,$y]} != ' ' ]] ; then
                 for direction in n ne e se s sw w nw ; do
                     count_line $direction $x $y $mark
@@ -135,6 +120,7 @@ function check_for_win {
 }
 
 function game {
+    # ()
     empty_board
     display_board
 
@@ -143,16 +129,16 @@ function game {
     game_on=0
 
     while [[ $game_on -eq 0 ]]; do
-        echo "Waiting for player: $active_player"
+        echo "current_player:$active_player:"
         col=$(get_col)
-        echo "col: $col"
+        # echo "col: $col"
         drop_in $col $active_player
         drop_result=$?
         display_board
         check_for_win $active_player
         win_len=$?
         if [[ $win_len -ge 4 ]] ; then
-            echo "!YOU WON!"
+            echo "won_by:$active_player:"
             game_on=1
         fi
         if [[ $drop_result == "0" ]] ; then
@@ -165,4 +151,60 @@ function game {
     done
 }
 
-game
+while getopts "sb:m:" opt ; do
+    case $opt in
+        b)
+            isb=true
+            initial_board=$OPTARG
+            ;;
+        m)
+            move=$OPTARG
+            ;;
+        s)
+            single_move=true
+            ;;
+    esac
+done
+
+if [[ "$isb" == true ]] ; then
+    tmp=($(echo -n $initial_board | sed 's/,,/,_,/g;s/,,/,_,/g' | tr ',' "\n"))
+    i=0
+    for y in $(seq 0 $y_max) ; do
+        for x in $(seq 0 $x_max) ; do 
+            char=${tmp[$i]}
+            # echo "$i $x $y $char"
+            if [[ "$char" == "_" || "$char" == "" ]] ; then
+                board[$x,$y]=' '
+            else
+                board[$x,$y]=$char
+            fi
+            i=$(($i + 1))
+        done
+    done
+fi
+
+if [[ "$single_move" == true ]] ; then
+    # display_board
+    move=($(echo $move | tr ':' "\n"))
+    move_player=${move[0]}
+    move_col=${move[1]}
+    drop_in $move_col $move_player
+    drop_result=$?
+    display_board
+    check_for_win $move_player
+    win_len=$?
+    if [[ $win_len -ge 4 ]] ; then
+        echo "won_by:$move_player:"
+    elif [[ "$drop_result" == "0" ]] ; then
+        if [[ $move_player == $player_1_mark ]] ; then
+            active_player=$player_2_mark
+        else
+            active_player=$player_1_mark
+        fi
+        echo "current_player:$active_player:"
+    else
+        echo "current_player:$move_player:"
+    fi
+else
+    game
+fi

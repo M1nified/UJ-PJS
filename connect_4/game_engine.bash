@@ -19,6 +19,20 @@ function display_board {
     done
 }
 
+function display_board_raw {
+    echo -en "board:$(($x_max + 1)):$(($y_max + 1)):"
+    for y in $(seq 0 $y_max) ; do
+        for x in $(seq 0 $x_max) ; do
+            if [[ ${board[$x,$y]} != " " ]] ; then
+                echo -n "${board[$x,$y]},"
+            else
+                echo -n ","
+            fi
+        done
+    done
+    echo ":"
+}
+
 function empty_board {
     # ()
     for y in $(seq 0 $y_max); do
@@ -151,7 +165,7 @@ function game {
     done
 }
 
-while getopts "sb:m:" opt ; do
+while getopts "0esb:m:" opt ; do
     case $opt in
         b)
             isb=true
@@ -163,19 +177,37 @@ while getopts "sb:m:" opt ; do
         s)
             single_move=true
             ;;
+        0)
+            is0=true
+            ;;
     esac
 done
 
+if [[ "$is0" == true ]] ; then
+    empty_board
+    display_board_raw
+    exit 0
+fi
+
 if [[ "$isb" == true ]] ; then
-    tmp=($(echo -n $initial_board | sed 's/,,/,_,/g;s/,,/,_,/g' | tr ',' "\n"))
+    tmp=($(echo -n $initial_board | tr ':' "\n"))
+    if [[ "${tmp[0]}" != "board" ]] ; then
+        exit 1;
+    fi
+    x_max=$((${tmp[1]} - 1))
+    y_max=$((${tmp[2]} - 1))
+    empty_board
+    tmp=($(echo -n ${tmp[3]} | sed 's/,,/,_,/g;s/,,/,_,/g;s/^,/_,/g;s/,$//g' | tr ',' "\n"))
     i=0
     for y in $(seq 0 $y_max) ; do
         for x in $(seq 0 $x_max) ; do 
             char=${tmp[$i]}
             # echo "$i $x $y $char"
             if [[ "$char" == "_" || "$char" == "" ]] ; then
+                set_board $x $y ' '
                 board[$x,$y]=' '
             else
+                set_board $x $y $char
                 board[$x,$y]=$char
             fi
             i=$(($i + 1))
@@ -183,14 +215,16 @@ if [[ "$isb" == true ]] ; then
     done
 fi
 
-if [[ "$single_move" == true ]] ; then
+# display_board
+
+if [[ "$single_move" -eq true ]] ; then
     # display_board
     move=($(echo $move | tr ':' "\n"))
     move_player=${move[0]}
-    move_col=${move[1]}
+    move_col=$((${move[1]} - 1))
     drop_in $move_col $move_player
     drop_result=$?
-    display_board
+    display_board_raw
     check_for_win $move_player
     win_len=$?
     if [[ $win_len -ge 4 ]] ; then
@@ -208,3 +242,11 @@ if [[ "$single_move" == true ]] ; then
 else
     game
 fi
+
+# display_board
+# ,,,,,,,
+# ,,,,,,,
+# ,,,,,,,
+# ,,,,,,,
+# ,,,,,,,
+# a,,,,,,,:

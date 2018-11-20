@@ -1,6 +1,11 @@
 #!/usr/bin/perl
 
+use IO::Handle;
+use IO::Pipe;
 use IO::Select;
+
+my $web_server = 0;
+my $ws_pipe = 0;
 
 package Player;
 
@@ -10,6 +15,20 @@ sub new {
        _type => shift,
    };
    print "Player type: ", $self->{_type}, "\n";
+   if ($self->{_type} eq 'browser') {
+        if ($web_server eq 0){
+            #    $web_server = new WebServer();
+        }
+        if ($ws_pipe == 0){
+            print "make pipe";
+            $ws_pipe = IO::Pipe->new();
+            $io = IO::Handle->new();
+            open(my $fh, "|tr '[a-z]' '[A-Z]'");
+            # $io->fdopen();
+            $ws_pipe->writer();
+            open(WS_FIFO, "> webserver.pipe");
+        }
+   }
    bless $self, $class;
    return $self;
 }
@@ -41,6 +60,8 @@ sub inform_board {
             print $bdisp[$i], "|";
         }
         print "\n";
+    } elsif ($self->{_type} eq 'browser') {
+        print WS_FIFO "$board\n";
     }
 }
 
@@ -71,6 +92,8 @@ sub getCol9 {
         }
         print "\n";
         return $col;
+    } elsif ($self->{_type} eq 'browser') {
+        return 1;
     }
 }
 
@@ -85,7 +108,7 @@ sub new {
 
 package Inter;
 
-my $player_a = new Player('human');
+my $player_a = new Player('browser');
 my $player_b = new Player('human');
 
 sub ProcessLine {

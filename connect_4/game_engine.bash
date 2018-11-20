@@ -165,7 +165,7 @@ function game {
     done
 }
 
-while getopts "0esb:m:" opt ; do
+while getopts "01esb:m:" opt ; do
     case $opt in
         b)
             isb=true
@@ -185,8 +185,6 @@ done
 
 if [[ "$is0" == true ]] ; then
     empty_board
-    display_board_raw
-    exit 0
 fi
 
 if [[ "$isb" == true ]] ; then
@@ -213,6 +211,11 @@ if [[ "$isb" == true ]] ; then
             i=$(($i + 1))
         done
     done
+fi
+
+if [[ "$is0" == true ]] ; then
+    display_board_raw
+    exit 0
 fi
 
 # display_board

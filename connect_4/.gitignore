@@ -1,0 +1,5 @@
+*.pkl
+*.log
+*.pipe
+
+.vscode/settings.json

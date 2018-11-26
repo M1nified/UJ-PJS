@@ -30,6 +30,10 @@ while(scalar @ARGV gt 0){
         }elsif($p2 eq ""){
             $p2 = $arg;
         }
+    }else{
+        print "Error: Unknown argument '", $arg, "'.\n\n";
+        print_help();
+        exit(1);
     }
 }
 

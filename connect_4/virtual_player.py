@@ -6,11 +6,13 @@ from threading import Thread
 import pickle
 import os
 
-def save_obj(obj, name ):
-    with open('./'+ name + '.pkl', 'wb') as f:
+
+def save_obj(obj, name):
+    with open('./' + name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
-def load_obj(name ):
+
+def load_obj(name):
     file_name = './' + name + '.pkl'
     if os.path.isfile(file_name):
         with open(file_name, 'rb') as f:
@@ -21,19 +23,26 @@ def load_obj(name ):
     else:
         return False
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-b', '--board', help='Board state', required=True, dest='board')
-parser.add_argument('-p', '--player', help='Player', required=True, dest='player')
+parser = argparse.ArgumentParser(description="Returns next move for a given player at the a given board state.")
+parser.add_argument('-b', '--board', help="Board state",
+                    required=True, dest='board')
+parser.add_argument('-p', '--player', help='Player\nE.g. -p a',
+                    required=True, dest='player')
+parser.add_argument('-v', '--verbose', help='Display log',
+                    required=False, dest='verbose', action='store_true')
 
 args = parser.parse_args()
 args = vars(args)
 
-player = args['player']
 board = args['board']
-board = subprocess.check_output("./game_engine.bash -0 -b " + board, shell=True).decode().split("\n")[0]
+player = args['player']
+verbose = args['verbose']
+board = subprocess.check_output(
+    "./game_engine.bash -0 -b " + board, shell=True).decode().split("\n")[0]
 
 if player == 'b':
-    board = board.replace("b,", "c,").replace(",b", ",c").replace("a,", "b,").replace(",a", ",b").replace("c,", "a,").replace(",c", ",a")
+    board = board.replace("b,", "c,").replace(",b", ",c").replace(
+        "a,", "b,").replace(",a", ",b").replace("c,", "a,").replace(",c", ",a")
     player = 'a'
 
 tmp = board.split(':')
@@ -44,101 +53,111 @@ calls = 0
 working_threads = 0
 working_threads_max = 10
 
-moves_map = {}
-moves_map_name = 'moves_map_' + str(board_x) + '_' + str(board_y)
-tmp = load_obj(moves_map_name)
-if tmp != False:
-    moves_map = tmp
 
-# print(moves_map)
-
-def try_move(player0, board, player, depth = 0, column = -1, results = None):
-    global calls
-    global working_threads, working_threads_max
-    global board_x, board_y
-    global moves_map
-
-    calls += 1
-
-    if board in moves_map:
-        return moves_map[board]
-    elif column == -1:
-        results = [None] * board_x
-        threads = [None] * board_x
-        if working_threads < working_threads_max:
-            for col in range(1, board_x + 1):
-                working_threads += 1
-                threads[col-1] = Thread(target=try_move, args=(player0, board, player, depth + 1, col, results))
-                threads[col-1].start()
-
-            for i in range(len(threads)):
-                # print(i)
-                threads[i].join()
-                working_threads -= 1
+def is_won(result_str):
+    lines = result_str.splitlines(False)
+    if len(lines) > 1:
+        potential_won_by = lines[1]
+        if potential_won_by.split(":")[0] == "won_by":
+            return potential_won_by.split(":")[1]
         else:
-            for col in range(1, board_x + 1):
-                # print('local')
-                try_move(player0, board, player, depth + 1, col, results)
+            return False
+    return None
 
 
-        # print("joined", depth, calls)
-        best_final = "lost"
-        best_move = -1
-        best_count = -1
-        for i in range(len(results)):
-            if results[i]:
-                (final, move, count) = results[i]
-                if best_final != "won" and final == "won" or best_final != "stuck" and final == "stuck":
-                    best_final = final
-                    best_move = move
-                    best_count = count
-                if final == "won" and count < best_count:
-                    best_move = move
-                    best_count = count
-                elif best_final != "won" and count < best_count:
-                    best_final = final
-                    best_move = move
-                    best_count = count
-        if best_final != "stuck":
-            print(board, (best_final, best_move, best_count))
-        moves_map[board] = (best_final, best_move, best_count)
-        return(best_final, best_move, best_count)
+def get_board_row(result_str):
+    lines = result_str.splitlines(False)
+    if len(lines) > 0:
+        board = lines[0]
+        if board.split(":")[0] == "board":
+            return board
+    return None
+
+
+def get_current_player_row(result_str):
+    lines = result_str.splitlines(False)
+    if len(lines) > 1:
+        current_player = lines[1]
+        if current_player.split(":")[0] == "current_player":
+            return current_player
+    return None
+
+
+def get_current_player(result_str):
+    row = get_current_player_row(result_str)
+    if row != None:
+        return row.split(":")[1]
+    return None
+
+
+def oponent_of(player):
+    if(player == 'a'):
+        return 'b'
     else:
-        command = "./game_engine.bash -s -b " + board + " -m " + player + ":" + str(column)
-        # print(command)
+        return 'a'
 
-        result = subprocess.check_output(command, shell=True)
-        # print(result)
-        result = result.decode().split("\n")
-        # print(result)
-        res_board = result[0]
-        if result[1] :
-            tmp = result[1].split(":")
-            # print(tmp)
-            if tmp[0] == 'current_player':
-                if tmp[1] == player:
-                    # print("stuck", calls)
-                    results[column-1] = ("stuck", column, 1)
-                else:
-                    (final, move, count) = try_move(player0, res_board, tmp[1], depth + 1)
-                    # results[column-1] = ("next", column, 1)
-                    results[column-1] = (final, column, count + 1)
-            elif tmp[0] == 'won_by':
-                if tmp[1] == player0:
-                    # print("won", calls)
-                    results[column-1] = ("won", column, 1)
-                else:
-                    # print("lost", calls)
-                    results[column-1] = ("lost", column, 1)
-            else:
-                results[column-1] = ("stuck", column, 1)
-        else:
-            results[column-1] = ("stuck", column, 1)
 
-(final, move, count) = try_move(player, board, player)
+def get_move_result(player, board, move_col):
+    command = "./game_engine.bash -s -b " + \
+        board + " -m " + player + ":" + str(move_col)
+    result = subprocess.check_output(command, shell=True).decode()
+    return result
 
-# print((final, move, count))
 
-print(move)
+def prevent_instant_lose(player, board):
+    global board_x
+    for col in range(1, board_x + 1):
+        test = get_move_result(oponent_of(player), board, col)
+        if is_won(test) == oponent_of(player):
+            return col
+    return None
 
-save_obj(moves_map, moves_map_name)
+
+def ensure_instant_win(player, board):
+    global board_x
+    for col in range(1, board_x + 1):
+        test = get_move_result(player, board, col)
+        if is_won(test) == player:
+            return col
+    return None
+
+
+def find_next_move(player, board):
+    print(player, board)
+    global board_x
+    states = []
+    for col in range(1, board_x + 1):
+        move1 = get_move_result(player, board, col)
+        if get_current_player(move1) == oponent_of(player):
+            board1 = get_board_row(move1)
+            moves = []
+            for col2 in range(1, board_x + 1):
+                move2 = get_move_result(oponent_of(player), board1, col2)
+                if get_current_player(move2) == player:
+                    moves.append(move2)
+            states.append((col, moves))
+    print(states)
+    for col, states2 in states:
+        print(col)
+        for state in states2:
+            print(state)
+
+
+def find_move(player, board):
+    col = ensure_instant_win(player, board)
+    if col != None:
+        return col
+    col = prevent_instant_lose(player, board)
+    if col != None:
+        return col
+    find_next_move(player, board)
+
+
+def find_move_0():
+    global player, board
+    col = find_move(player, board)
+    return col
+
+
+move = find_move_0()
+print(move, end='')

@@ -25,11 +25,11 @@
 
     window.addEventListener('load', function () {
 
-        updateBoard();
+        updateGameState();
 
     })
 
-    function updateBoard() {
+    function updateGameState() {
         const request = new Request('api/board');
         fetch(request)
             .then(response => {
@@ -41,7 +41,7 @@
             .then(response => {
                 console.log(response);
                 response && displayBoard(new Board(response));
-                setTimeout(updateBoard, 500);
+                setTimeout(updateGameState, 500);
             })
             .catch(reason => {
                 console.error(reason)

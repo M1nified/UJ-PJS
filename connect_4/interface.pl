@@ -1,115 +1,64 @@
 #!/usr/bin/perl
 
-use IO::Handle;
-use IO::Pipe;
-use IO::Select;
+use Player;
 
-my $web_server = 0;
-my $ws_pipe = 0;
+my($p1, $p2);
 
-package Player;
-
-sub new {
-   my $class = shift;
-   my $self = {
-       _type => shift,
-   };
-   print "Player type: ", $self->{_type}, "\n";
-   if ($self->{_type} eq 'browser') {
-        if ($web_server eq 0){
-            #    $web_server = new WebServer();
-        }
-        if ($ws_pipe == 0){
-            print "make pipe";
-            $ws_pipe = IO::Pipe->new();
-            $io = IO::Handle->new();
-            open(my $fh, "|tr '[a-z]' '[A-Z]'");
-            # $io->fdopen();
-            $ws_pipe->writer();
-            open(WS_FIFO, "> webserver.pipe");
-        }
-   }
-   bless $self, $class;
-   return $self;
+sub print_help(){
+    my $help = "usage: $0 [-h] PLAYER_1_TYPE PLAYER_2_TYPE\
+\
+Starts game between two players.\
+\
+PLAYER_TYPE can be one of following strings:\
+    human\
+    computer\
+\
+optional arguments:\
+    -h, --help          show this help message and exit\
+";
+    print $help, "\n";
 }
 
-sub cout {
-    my( $self, $msg ) = @_;
-    if ($self->{_type} eq 'human') {
-        print $msg;
+while(scalar @ARGV gt 0){
+    my $arg = shift;
+    if($arg eq "-h" || $arg eq "--help"){
+        print_help();
+        exit(0);
+    }elsif($arg =~ m/(human|computer)/){
+        if($p1 eq ""){
+            $p1 = $arg;
+        }elsif($p2 eq ""){
+            $p2 = $arg;
+        }
     }
 }
 
-sub inform_board {
-    my ($self, $board) = @_;
-    if ($self->{_type} eq 'human') {
-        my @bdisp = split(/:/, $board);
-        my $bx = $bdisp[1];
-        my $by = $bdisp[2];
-        my $bdisp = $bdisp[3];
-        $bdisp =~ s/,,/,_,/g;
-        $bdisp =~ s/,,/,_,/g;
-        $bdisp =~ s/^,/_,/g;
-        $bdisp =~ s/,$//g;
-        my @bdisp = split(/,/, $bdisp);
-        my $blen = $bx * $by;
-        for my $i (0..$blen) {
-            if ( $i % $bx == 0) {
-                print "\n";
-            }
-            print $bdisp[$i], "|";
-        }
-        print "\n";
-    } elsif ($self->{_type} eq 'browser') {
-        print WS_FIFO "$board\n";
-    }
+
+if($p1 eq ""){
+    print "Error: First player type is required.\n\n";
+    print_help();
+    exit(1);
+}
+if($p2 eq ""){
+    print "Error: Second player type is required.\n\n";
+    print_help();
+    exit(1);
 }
 
-sub inform_win {
-    my ($self, $winner) = @_;
-    if ($self->{_type} eq 'human') {
-        print "The winner is: $winner \n";
-    }
+# print $p1, "\n", $p2, "\n";
+
+sub parse_player {
+    my ($string) = @_;
+    my @cp = split(/:/, $string);
+    return $cp[1];
 }
 
-sub getCol9 {
-    my( $self ) = @_;
-    # print "getCol9 ", $self->{_type}, "\n";
-    if ($self->{_type} eq 'human') {
-        # print "getCol9 human in \n";
-        if ($BSD_STYLE) {
-            system "stty cbreak </dev/tty >/dev/tty 2>&1";
-        }
-        else {
-            system "stty", '-icanon', 'eol', "\001";
-        }
-        my $col = getc(STDIN);
-        if ($BSD_STYLE) {
-            system "stty -cbreak </dev/tty >/dev/tty 2>&1";
-        }
-        else {
-            system 'stty', 'icanon', 'eol', '^@'; # ASCII NUL
-        }
-        print "\n";
-        return $col;
-    } elsif ($self->{_type} eq 'browser') {
-        return 1;
-    }
-}
+# my $player_a = new Player('a', 'browser');
+my $player_a = new Player('a', 'human');
+my $player_b = new Player('b', 'computer');
 
-package Processor;
-
-sub new {
-   my $class = shift;
-   my $self = {};
-   bless $self, $class;
-   return $self;
-}
-
-package Inter;
-
-my $player_a = new Player('browser');
-my $player_b = new Player('human');
+$player_a->inform_key();
+$player_b->inform_key();
 
 sub ProcessLine {
     my $line = $_[0];
@@ -143,6 +92,8 @@ print $board;
 
 while (true) {
     my $move_col;
+    $player_a->inform_active_player($active_player);
+    $player_b->inform_active_player($active_player);
     if($active_player eq 'a'){
         $move_col = $player_a->getCol9();
     } else {

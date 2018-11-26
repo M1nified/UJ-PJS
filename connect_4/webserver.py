@@ -14,8 +14,12 @@ pipe = pipes.Template()
 board_string = ""
 current_player_string = ""
 
+player_a_key = ""
+player_b_key = ""
+
 def manage_pipe():
     global board_string
+    global current_player_string
     f = pipe.open('webserver.pipe', 'r')
     while True:
         line = f.readline()
@@ -25,6 +29,16 @@ def manage_pipe():
                 print("PIPE set board")
                 board_string = line
             elif(re.match(r"^current_player.*$", line)):
+                print("PIPE set current_player")
+                current_player_string = line
+            elif(re.match(r"^player_key.*$", line)):
+                print("PIPE set player_key", line)
+                key = line.splitlines(False)[0].split(":")[2]
+                if(re.match(r":a:", line)):
+                    player_a_key = key
+                else:
+                    player_b_key = key
+                print("PIPE set current_player")
                 current_player_string = line
         time.sleep(.25)
     f.close()
@@ -105,8 +119,10 @@ def process_post_request(request):
 
 def process_api_get(request):
     global board_string
+    global current_player_string
     _, path = req_method_path(request)
-    if(path == '/api/board'):
+    print("process_api_get", path)
+    if(re.match(r"/api/board/?", path)):
         # board = "board:7:6:,a,,,b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,:"
         board = board_string
         print(board)
@@ -121,15 +137,27 @@ def process_api_get(request):
         boardMap['board'] = [ (0 if x == '' else x) for x in boardMap['board'] ]
         boardJson = json.dumps(boardMap)
         return "HTTP/1.1 200 OK\r\nContent-type: application/javascript\r\n\r\n" + boardJson
-    elif (path == '/api/player/current'):
+    elif(re.match(r"/api/player/current/?", path)):
+        player = current_player_string
+        print(player)
+        player = player.splitlines(False)[0].split(':')
+        playerMap = {
+            "player" : player[1]
+        }
+        playerJson = json.dumps(playerMap)
+        return "HTTP/1.1 200 OK\r\nContent-type: application/javascript\r\n\r\n" + playerJson
+    elif(re.match(r"/api/me/key/?", path)):
         return "HTTP/1.1 200 OK\r\nContent-type: application/javascript\r\n\r\n"
     else:
         return "HTTP/1.1 404 Not Found\r\n"
 
 def process_api_post(request):
     _, path = req_method_path(request)
-    if(path == '/api/player/move'):
-        return "HTTP/1.1 204 No Content"
+    if(re.match(r"/api/player/move/?", path)):
+        moveJson = request.split("\r\n\r\n")[1]
+        move = json.loads(moveJson)
+        print(move)
+        return "HTTP/1.1 204 No Content\r\n"
     else:
         return "HTTP/1.1 404 Not Found\r\n"
 

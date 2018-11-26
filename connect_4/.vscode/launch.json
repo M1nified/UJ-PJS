@@ -12,6 +12,18 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python Virtual Player",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/virtual_player.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-b board:7:6:,,,,,,,,,,,,,,,,,,,,,b,,,,,,,b,a,,,,,,b,a,,a,,,,:",
+                "-p b",
+                "-v"
+            ]
+        },
+        {
             "name": "Python: Current File (External Terminal)",
             "type": "python",
             "request": "launch",

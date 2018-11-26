@@ -38,7 +38,7 @@ board = args['board']
 player = args['player']
 verbose = args['verbose']
 board = subprocess.check_output(
-    "./game_engine.bash -0 -b " + board, shell=True).decode().split("\n")[0]
+    "./game_engine.sh -0 -b " + board, shell=True).decode().split("\n")[0]
 
 if player == 'b':
     board = board.replace("b,", "c,").replace(",b", ",c").replace(
@@ -98,7 +98,7 @@ def oponent_of(player):
 
 
 def get_move_result(player, board, move_col):
-    command = "./game_engine.bash -s -b " + \
+    command = "./game_engine.sh -s -b " + \
         board + " -m " + player + ":" + str(move_col)
     result = subprocess.check_output(command, shell=True).decode()
     return result

@@ -54,8 +54,8 @@ sub parse_player {
 }
 
 # my $player_a = new Player('a', 'browser');
-my $player_a = new Player('a', 'human');
-my $player_b = new Player('b', 'computer');
+my $player_a = new Player('a', $p1);
+my $player_b = new Player('b', $p2);
 
 $player_a->inform_key();
 $player_b->inform_key();
@@ -87,7 +87,7 @@ sub ProcessLine {
 
 
 my $active_player = 'a';
-my $board = `./game_engine.bash -0`;
+my $board = `./game_engine.sh -0`;
 print $board;
 
 while (true) {
@@ -102,9 +102,9 @@ while (true) {
     my $move = "$active_player:$move_col";
     print $move, "\n";
 
-    print "./game_engine.bash -s -m $move -b $board \n";
+    print "./game_engine.sh -s -m $move -b $board \n";
 
-    my $step = `./game_engine.bash -s -m $move -b $board`;
+    my $step = `./game_engine.sh -s -m $move -b $board`;
     print $step;
 
     my @step = split(/\n/, $step);

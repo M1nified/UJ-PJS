@@ -165,23 +165,56 @@ function game {
     done
 }
 
-while getopts "01esb:m:" opt ; do
-    case $opt in
-        b)
+function print_help {
+    echo "usage: $0 [-h] [-b] [-m] [-s] [-0]
+
+Delivers mechanizms for the Connect 4 game.
+
+optional arguments:
+    -h, --help          show this help message and exit
+    -b BOARD, --board BOARD
+                        set initial board
+    -m MOVE, --move MOVE
+                        perform given move
+    -s, --single        perform single move and exit
+    -0                  return initial board
+
+Started without --single starts the game."
+}
+
+while (( "$#" )); do
+    arg=$1
+    case $arg in
+        -h|--help)
+            help=1
+            ;;
+        -b|--board)
             isb=true
-            initial_board=$OPTARG
+            shift
+            initial_board=$1
             ;;
-        m)
-            move=$OPTARG
+        -m|--move)
+            shift
+            move=$1
             ;;
-        s)
+        -s|--single)
             single_move=true
             ;;
-        0)
+        -0)
             is0=true
             ;;
+        *)
+            echo -e "Error: Unknown argument '$arg'.\n"
+            print_help
+            exit 1
     esac
+    shift
 done
+
+if (( help )) ; then
+    print_help
+    exit 0
+fi
 
 if [[ "$is0" == true ]] ; then
     empty_board
@@ -213,15 +246,12 @@ if [[ "$isb" == true ]] ; then
     done
 fi
 
-if [[ "$is0" == true ]] ; then
+if [[ "$is0" == "true" ]] ; then
     display_board_raw
     exit 0
 fi
 
-# display_board
-
-if [[ "$single_move" -eq true ]] ; then
-    # display_board
+if [[ "$single_move" == "true" ]] ; then
     move=($(echo $move | tr ':' "\n"))
     move_player=${move[0]}
     move_col=$((${move[1]} - 1))

@@ -17,7 +17,7 @@ sub new {
     _key => $key,
     _board => ""
     };
-    print "Player type: ", $self->{_type}, "\n";
+    print "Player ", $self->{_player} ," type is ", $self->{_type}, "\n";
     if ($self->{_type} eq 'browser') {
         if ($web_server eq 0){
             #    $web_server = new WebServer();
@@ -77,11 +77,26 @@ sub inform_board {
         $bdisp =~ s/,$//g;
         my @bdisp = split(/,/, $bdisp);
         my $blen = $bx * $by;
+        for my $i (1..$bx*2+1) {
+            print "-";
+        }
+        print "\n|";
+        for my $i (1..$bx) {
+            print "$i|";
+        }
+        # print "\n|";
         for my $i (0..$blen) {
-            if ( $i % $bx == 0) {
-                print "\n";
+            if ( $i % $bx == 0 && $i < $blen ) {
+                print "\n|";
             }
-            print $bdisp[$i], "|";
+            print $bdisp[$i];
+            if ( $i < $blen) {
+                print "|";
+            }
+        }
+        print "\n";
+        for my $i (1..$bx*2+1) {
+            print "-";
         }
         print "\n";
     } elsif ($self->{_type} eq 'browser') {
@@ -100,7 +115,7 @@ sub getCol9 {
     my( $self ) = @_;
     # print "getCol9 ", $self->{_type}, "\n";
     if ($self->{_type} eq 'human') {
-        # print "getCol9 human in \n";
+        print "Please, type column number: ";
         if ($BSD_STYLE) {
             system "stty cbreak </dev/tty >/dev/tty 2>&1";
         }
@@ -119,9 +134,9 @@ sub getCol9 {
     } elsif ($self->{_type} eq 'computer') {
         my $board = $self->{_board};
         my $player = $self->{_player};
-        print "./virtual_player.py -b $board -p $player\n";
+        # print "./virtual_player.py -b $board -p $player\n";
         my $move = `./virtual_player.py -b $board -p $player`;
-        print "pc moved $move\n";
+        # print "pc moved $move\n";
         return $move;
     } elsif ($self->{_type} eq 'browser') {
         return 1;

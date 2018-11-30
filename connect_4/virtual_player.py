@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import argparse
+import os
+import pickle
 import subprocess
 from threading import Thread
-import pickle
-import os
 
 
 def save_obj(obj, name):
@@ -23,7 +23,9 @@ def load_obj(name):
     else:
         return False
 
-parser = argparse.ArgumentParser(description="Returns next move for a given player at the a given board state.")
+
+parser = argparse.ArgumentParser(
+    description="Returns next move for a given player at the a given board state.")
 parser.add_argument('-b', '--board', help="Board state",
                     required=True, dest='board')
 parser.add_argument('-p', '--player', help='Player\nE.g. -p a',
@@ -122,8 +124,8 @@ def ensure_instant_win(player, board):
     return None
 
 
-def find_next_move(player, board):
-    print(player, board)
+def find_next_move(player, board, levels_to_go):
+    # print(player, board)
     global board_x
     states = []
     for col in range(1, board_x + 1):
@@ -136,26 +138,44 @@ def find_next_move(player, board):
                 if get_current_player(move2) == player:
                     moves.append(move2)
             states.append((col, moves))
-    print(states)
+    # print("STATES", states)
+    cols_ok = []
+    cols_bad = []
     for col, states2 in states:
-        print(col)
+        # print(col)
         for state in states2:
-            print(state)
+            # print(state)
+            res, col2 = find_move(player, get_board_row(state), levels_to_go - 1)
+            if res == 'win':
+                return 'win', col
+            elif res == 'lose':
+                cols_bad.append(col)
+            else:
+                cols_ok.append(col)
+    if len(cols_ok) > 0:
+        return 'move', cols_ok[0]
+    elif len(cols_bad) > 0:
+        return 'move', cols_bad[0]
+    else:
+        return 'move', 1
 
 
-def find_move(player, board):
+
+def find_move(player, board, levels_to_go = 1):
+    if levels_to_go <= 0:
+        return 'max_level', None
     col = ensure_instant_win(player, board)
     if col != None:
-        return col
+        return 'win', col
     col = prevent_instant_lose(player, board)
     if col != None:
-        return col
-    find_next_move(player, board)
+        return 'lose', col
+    return find_next_move(player, board, levels_to_go)
 
 
 def find_move_0():
     global player, board
-    col = find_move(player, board)
+    _, col = find_move(player, board)
     return col
 
 

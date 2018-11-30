@@ -92,9 +92,14 @@ sub ProcessLine {
 
 my $active_player = 'a';
 my $board = `./game_engine.sh -0`;
-print $board;
+# print $board;
 
-while (true) {
+$player_a->inform_board($board);
+$player_b->inform_board($board);
+
+my $the_game_is_on = 1;
+
+while ($the_game_is_on) {
     my $move_col;
     $player_a->inform_active_player($active_player);
     $player_b->inform_active_player($active_player);
@@ -104,12 +109,12 @@ while (true) {
         $move_col = $player_b->getCol9();
     }
     my $move = "$active_player:$move_col";
-    print $move, "\n";
+    # print $move, "\n";
 
-    print "./game_engine.sh -s -m $move -b $board \n";
+    # print "./game_engine.sh -s -m $move -b $board \n";
 
     my $step = `./game_engine.sh -s -m $move -b $board`;
-    print $step;
+    # print $step;
 
     my @step = split(/\n/, $step);
     $board = $step[0];
@@ -129,6 +134,7 @@ while (true) {
     } elsif ($cp[0] eq "won_by"){
         $player_a->inform_win($cp[1]);
         $player_b->inform_win($cp[1]);
+        $the_game_is_on = 0;
     }
 
 }

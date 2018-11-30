@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 
+use FindBin;
+use lib "$FindBin::RealBin";
 use Player;
+
+print "$FindBin::RealBin\n";
 
 my($p1, $p2);
 
@@ -91,8 +95,8 @@ sub ProcessLine {
 
 
 my $active_player = 'a';
-my $board = `./game_engine.sh -0`;
-# print $board;
+my $board = `$FindBin::RealBin/game_engine.sh -0`;
+# print "board: $board \n";
 
 $player_a->inform_board($board);
 $player_b->inform_board($board);
@@ -111,9 +115,9 @@ while ($the_game_is_on) {
     my $move = "$active_player:$move_col";
     # print $move, "\n";
 
-    # print "./game_engine.sh -s -m $move -b $board \n";
+    # print "$FindBin::RealBin/game_engine.sh -s -m $move -b $board \n";
 
-    my $step = `./game_engine.sh -s -m $move -b $board`;
+    my $step = `$FindBin::RealBin/game_engine.sh -s -m $move -b $board`;
     # print $step;
 
     my @step = split(/\n/, $step);

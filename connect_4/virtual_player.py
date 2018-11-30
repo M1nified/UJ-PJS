@@ -6,14 +6,18 @@ import pickle
 import subprocess
 from threading import Thread
 
+script_dir = os.path.dirname(os.path.realpath(__file__)) + '/'
+# print(script_dir)
 
 def save_obj(obj, name):
-    with open('./' + name + '.pkl', 'wb') as f:
+    global script_dir
+    with open(script_dir + name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
 def load_obj(name):
-    file_name = './' + name + '.pkl'
+    global script_dir
+    file_name = script_dir + name + '.pkl'
     if os.path.isfile(file_name):
         with open(file_name, 'rb') as f:
             try:
@@ -40,7 +44,7 @@ board = args['board']
 player = args['player']
 verbose = args['verbose']
 board = subprocess.check_output(
-    "./game_engine.sh -0 -b " + board, shell=True).decode().split("\n")[0]
+    script_dir + "game_engine.sh -0 -b " + board, shell=True).decode().split("\n")[0]
 
 if player == 'b':
     board = board.replace("b,", "c,").replace(",b", ",c").replace(
@@ -100,7 +104,8 @@ def oponent_of(player):
 
 
 def get_move_result(player, board, move_col):
-    command = "./game_engine.sh -s -b " + \
+    global script_dir
+    command = script_dir + "game_engine.sh -s -b " + \
         board + " -m " + player + ":" + str(move_col)
     result = subprocess.check_output(command, shell=True).decode()
     return result

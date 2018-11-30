@@ -1,5 +1,7 @@
 package Player;
 
+use FindBin;
+use lib "$FindBin::RealBin";
 use IO::Handle;
 use IO::Pipe;
 use IO::Select;
@@ -135,7 +137,7 @@ sub getCol9 {
         my $board = $self->{_board};
         my $player = $self->{_player};
         # print "./virtual_player.py -b $board -p $player\n";
-        my $move = `./virtual_player.py -b $board -p $player`;
+        my $move = `$FindBin::RealBin/virtual_player.py -b $board -p $player`;
         # print "pc moved $move\n";
         return $move;
     } elsif ($self->{_type} eq 'browser') {

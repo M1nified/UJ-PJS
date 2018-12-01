@@ -4,21 +4,50 @@ use FindBin;
 use lib "$FindBin::RealBin";
 use Player;
 
-print "$FindBin::RealBin\n";
+my $welcome = "
+
+                           Welcome to the game
+               ______                            __     __ __
+              / ____/___  ____  ____  ___  _____/ /_   / // /
+             / /   / __ \\/ __ \\/ __ \\/ _ \\/ ___/ __/  / // /_
+            / /___/ /_/ / / / / / / /  __/ /__/ /_   /__  __/
+            \\____/\\____/_/ /_/_/ /_/\\___/\\___/\\__/     /_/   
+
+
+
+";
+print $welcome;
+
+# print "$FindBin::RealBin\n";
 
 my($p1, $p2);
 
 sub print_help(){
-    my $help = "usage: $0 [-h] PLAYER_1_TYPE PLAYER_2_TYPE\
-\
-Starts game between two players.\
-\
-PLAYER_TYPE can be one of following strings:\
-    human\
-    computer\
-\
-optional arguments:\
-    -h, --help          show this help message and exit\
+    my $help = "             
+                             About the game
+
+This is a tour-based game requiring two players to begin. Participants
+make their moves alternately. In each move a player have to choose one
+of 7 columns in which one's token will be dropped. Tokens can be stack
+up to 6 in one column, one on another. The first player to make a line
+of 4 same tokens wins the game. The desired line can be horizontal,
+vertical or diagonal. The game ends with a tie if a board is full and
+no line of four same tokens is present.
+
+To start a game run the following command with proper arguments:
+
+$0 PLAYER_A_TYPE PLAYER_B_TYPE
+
+where PLAYER_#_TYPE can be one of following strings:
+    human
+    computer
+
+-------------------------------------------------------
+
+general script usage:
+$0 [-h] PLAYER_1_TYPE PLAYER_2_TYPE
+optional arguments:
+    -h, --help          show this help message and exit
 ";
     print $help, "\n";
 }

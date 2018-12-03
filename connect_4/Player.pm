@@ -6,6 +6,24 @@ use IO::Handle;
 use IO::Pipe;
 use IO::Select;
 use Digest::MD5;
+use Term::ANSIColor;
+
+my $a_color = "green";
+my $b_color = "blue";
+
+my $a_str = colored([$a_color], 'a');
+my $b_str = colored([$b_color], 'b');
+
+sub get_player_char {
+    my ($player) = @_;
+    if ($player eq 'a'){
+        return $a_str;
+    }elsif ($player eq 'b'){
+        return $b_str;
+    }else {
+        return $player;
+    }
+}
 
 my $web_server = 0;
 my $ws_pipe = 0;
@@ -19,7 +37,12 @@ sub new {
     _key => $key,
     _board => ""
     };
-    print "Player ", $self->{_player} ," type is ", $self->{_type}, "\n";
+    if ($self->{_player} eq 'a'){
+        $self->{_color} = $a_color;
+    } else {
+        $self->{_color} = $b_color;
+    }
+    print colored([$self->{_color}], "Player ", $self->{_player} ," type is ", $self->{_type}, "\n");
     if ($self->{_type} eq 'browser') {
         if ($web_server eq 0){
             #    $web_server = new WebServer();
@@ -48,7 +71,7 @@ sub cout {
 sub inform_active_player {
     my ($self, $active_player) = @_;
     if ($self->{_type} eq 'human') {
-        print "This is turn of player: $active_player\n";
+        print "This is turn of player: ", Player::get_player_char($active_player),"\n";
     } elsif ($self->{_type} eq 'browser') {
         print WS_FIFO "current_player:$active_player\n";
     }
@@ -89,7 +112,7 @@ sub display_board {
         if ( $i % $bx == 0 && $i < $blen ) {
             print "\n|";
         }
-        print $bdisp[$i];
+        print Player::get_player_char($bdisp[$i]);
         if ( $i < $blen) {
             print "|";
         }
@@ -114,7 +137,7 @@ sub inform_board {
 sub inform_win {
     my ($self, $winner) = @_;
     if ($self->{_type} eq 'human') {
-        print "The winner is: $winner \n";
+        print "The winner is: ", Player::get_player_char($winner), "\n";
     }
 }
 

@@ -9,7 +9,7 @@ use Digest::MD5;
 use Term::ANSIColor;
 
 my $a_color = "green";
-my $b_color = "blue";
+my $b_color = "red";
 
 my $a_str = colored([$a_color], 'a');
 my $b_str = colored([$b_color], 'b');

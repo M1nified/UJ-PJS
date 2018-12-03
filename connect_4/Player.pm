@@ -65,42 +65,47 @@ sub inform_key {
     }
 }
 
+sub display_board {
+    my ($board) = @_;
+    my @bdisp = split(/:/, $board);
+    my $bx = $bdisp[1];
+    my $by = $bdisp[2];
+    my $bdisp = $bdisp[3];
+    $bdisp =~ s/,,/,_,/g;
+    $bdisp =~ s/,,/,_,/g;
+    $bdisp =~ s/^,/_,/g;
+    $bdisp =~ s/,$//g;
+    my @bdisp = split(/,/, $bdisp);
+    my $blen = $bx * $by;
+    for my $i (1..$bx*2+1) {
+        print "-";
+    }
+    print "\n|";
+    for my $i (1..$bx) {
+        print "$i|";
+    }
+    # print "\n|";
+    for my $i (0..$blen) {
+        if ( $i % $bx == 0 && $i < $blen ) {
+            print "\n|";
+        }
+        print $bdisp[$i];
+        if ( $i < $blen) {
+            print "|";
+        }
+    }
+    print "\n";
+    for my $i (1..$bx*2+1) {
+        print "-";
+    }
+    print "\n";
+}
+
 sub inform_board {
     my ($self, $board) = @_;
     $self->{_board} = $board;
     if ($self->{_type} eq 'human') {
-        my @bdisp = split(/:/, $board);
-        my $bx = $bdisp[1];
-        my $by = $bdisp[2];
-        my $bdisp = $bdisp[3];
-        $bdisp =~ s/,,/,_,/g;
-        $bdisp =~ s/,,/,_,/g;
-        $bdisp =~ s/^,/_,/g;
-        $bdisp =~ s/,$//g;
-        my @bdisp = split(/,/, $bdisp);
-        my $blen = $bx * $by;
-        for my $i (1..$bx*2+1) {
-            print "-";
-        }
-        print "\n|";
-        for my $i (1..$bx) {
-            print "$i|";
-        }
-        # print "\n|";
-        for my $i (0..$blen) {
-            if ( $i % $bx == 0 && $i < $blen ) {
-                print "\n|";
-            }
-            print $bdisp[$i];
-            if ( $i < $blen) {
-                print "|";
-            }
-        }
-        print "\n";
-        for my $i (1..$bx*2+1) {
-            print "-";
-        }
-        print "\n";
+        Player::display_board($board);
     } elsif ($self->{_type} eq 'browser') {
         print WS_FIFO "$board\n";
     }
@@ -136,13 +141,21 @@ sub getCol9 {
     } elsif ($self->{_type} eq 'computer') {
         my $board = $self->{_board};
         my $player = $self->{_player};
-        # print "./virtual_player.py -b $board -p $player\n";
+        # print "$FindBin::RealBin/virtual_player.py -b $board -p $player\n";
         my $move = `$FindBin::RealBin/virtual_player.py -b $board -p $player`;
         # print "pc moved $move\n";
         return $move;
     } elsif ($self->{_type} eq 'browser') {
         return 1;
     }
+}
+
+sub isComputer {
+    my( $self ) = @_;
+    if ($self->{_type} eq 'computer') {
+        return 1;
+    }
+    return 0;
 }
 
 1

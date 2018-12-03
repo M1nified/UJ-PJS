@@ -1,13 +1,52 @@
 #!/usr/bin/python3
 
 import argparse
+import math
 import os
 import pickle
 import subprocess
 from threading import Thread
+import multiprocessing
+from multiprocessing import Pool
+
+
+class FromInside:
+    multiplier = -1
+    delta = 1
+
+    def __init__(self, board_x, center=None):
+        self.board_x = board_x
+        self.initial_center = center
+
+    def __iter__(self):
+        if self.initial_center is None:
+            self.center = math.floor(self.board_x / 2)
+        else:
+            self.center = self.initial_center
+        return self
+
+    def __next__(self):
+        under = False
+        over = False
+        keep_going = True
+        while keep_going and (not under or not over):
+            x = self.center + math.floor(self.delta / 2) * self.multiplier
+            if x > board_x:
+                over = True
+            elif x < 1:
+                under = True
+            else:
+                keep_going = False
+            self.delta += 1
+            self.multiplier *= - 1
+        if over and under:
+            return None
+        return x
+
 
 script_dir = os.path.dirname(os.path.realpath(__file__)) + '/'
 # print(script_dir)
+
 
 def save_obj(obj, name):
     global script_dir
@@ -129,6 +168,105 @@ def ensure_instant_win(player, board):
     return None
 
 
+def find_easy_win(player, board, count=0, center=None):
+    if count > 3:
+        return 'move', None
+    global board_x
+    ix = iter(FromInside(board_x + 1, center))
+    x = next(ix)
+    good_col = None
+    while x is not None:
+        result = get_move_result(player, board, x)
+        is_won_res = is_won(result)
+        print(str(x).rjust(count+1), file=open('./log', '+a'))
+        if get_current_player(result) == oponent_of(player) or is_won_res != False:
+            if good_col is None:
+                good_col = x
+            if is_won_res == player:
+                return 'win', x
+            else:
+                state, _ = find_easy_win(
+                    player, get_board_row(result), count+1, x)
+                if state == 'win':
+                    return 'win', x
+        x = next(ix)
+    if good_col is None:
+        good_col = 1
+    return 'move', good_col
+
+
+def find_win_get_results_for_board(player, board, center=None, level=0):
+    global board_x
+    ix = iter(FromInside(board_x + 1, center))
+    x = next(ix)
+    good_col = None
+    results = []
+    while x is not None:
+        result = get_move_result(player, board, x)
+        is_won_res = is_won(result)
+        # print(str(x).rjust(level+1), file=open('./log', '+a'))
+        if get_current_player(result) == oponent_of(player) or is_won_res != False:
+            if good_col is None:
+                good_col = x
+            if is_won_res == player:
+                return 'win', x
+            else:
+                results.append((result, x))
+        x = next(ix)
+    return 'results', results
+
+
+def find_win_analyze_results(player, results, level=0):
+    with Pool(multiprocessing.cpu_count()) as pool:
+        val_type, val = results
+        results = []
+        if val_type == 'win':
+            return 'win', val
+        elif val_type == 'results':
+            rets = [None] * len(val)
+            i = 0
+            for result, col in val:
+                rets[i] = pool.apply_async(find_win_get_results_for_board,
+                                           (player, get_board_row(result), col, level))
+                i += 1
+                # tmp = find_win_get_results_for_board(
+                #     player, get_board_row(result), col, level=level)
+                # val_type, val = tmp
+                # if val_type == 'win':
+                #     return 'win', val
+                # elif val_type == 'results':
+                #     results.extend(val)
+            i = 0
+            for ret in rets:
+                i+=1
+                if ret is not None:
+                    # print(str(i).rjust(level+5), file=open('./log', '+a'))
+                    val_type, val = ret.get()
+                    if val_type == 'win':
+                        return 'win', val
+                    elif val_type == 'results':
+                        results.extend(val)
+        return 'results', results
+
+
+def find_win(player, board, center=None):
+    results = find_win_get_results_for_board(player, board, center)
+    for i in range(1, 4):
+        # print(i, file=open('./log', '+a'))
+        results = find_win_analyze_results(player, results, level=i)
+        val_type, val = results
+        if val_type == 'win':
+            return 'win', val
+    ix = iter(FromInside(board_x + 1, center))
+    x = next(ix)
+    while x is not None:
+        result = get_move_result(player, board, x)
+        is_won_res = is_won(result)
+        if get_current_player(result) == oponent_of(player) or is_won_res != False:
+            return 'move', x
+        x = next(ix)
+
+
 def find_next_move(player, board, levels_to_go):
     # print(player, board)
     global board_x
@@ -150,7 +288,8 @@ def find_next_move(player, board, levels_to_go):
         # print(col)
         for state in states2:
             # print(state)
-            res, col2 = find_move(player, get_board_row(state), levels_to_go - 1)
+            res, col2 = find_move(
+                player, get_board_row(state), levels_to_go - 1)
             if res == 'win':
                 return 'win', col
             elif res == 'lose':
@@ -165,17 +304,18 @@ def find_next_move(player, board, levels_to_go):
         return 'move', 1
 
 
-
-def find_move(player, board, levels_to_go = 1):
+def find_move(player, board, levels_to_go=1):
     if levels_to_go <= 0:
         return 'max_level', None
-    col = ensure_instant_win(player, board)
-    if col != None:
-        return 'win', col
+    # col = ensure_instant_win(player, board)
+    # if col != None:
+    #     return 'win', col
     col = prevent_instant_lose(player, board)
     if col != None:
         return 'lose', col
-    return find_next_move(player, board, levels_to_go)
+    # return find_next_move(player, board, levels_to_go)
+    # return find_easy_win(player, board)
+    return find_win(player, board)
 
 
 def find_move_0():

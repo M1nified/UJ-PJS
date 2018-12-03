@@ -125,21 +125,30 @@ sub ProcessLine {
 
 my $active_player = 'a';
 my $board = `$FindBin::RealBin/game_engine.sh -0`;
+my @board = split(/\n/, $board);
+my $board =@board[0];
 # print "board: $board \n";
 
 $player_a->inform_board($board);
 $player_b->inform_board($board);
 
+if($player_a->isComputer() && $player_b->isComputer()) {
+    print "\nA computer is playing with itself.\n";
+    Player::display_board($board)
+}
+
 my $the_game_is_on = 1;
 
 while ($the_game_is_on) {
-    my $move_col;
+    my $move_col = -1;
     $player_a->inform_active_player($active_player);
     $player_b->inform_active_player($active_player);
-    if($active_player eq 'a'){
-        $move_col = $player_a->getCol9();
-    } else {
-        $move_col = $player_b->getCol9();
+    while ($move_col < 1 || $move_col > 7) {
+        if($active_player eq 'a'){
+            $move_col = $player_a->getCol9();
+        } else {
+            $move_col = $player_b->getCol9();
+        }
     }
     my $move = "$active_player:$move_col";
     # print $move, "\n";
@@ -158,6 +167,10 @@ while ($the_game_is_on) {
     $player_a->inform_board($board);
     $player_b->inform_board($board);
 
+    if($player_a->isComputer() && $player_b->isComputer()) {
+        Player::display_board($board)
+    }
+
     if ($cp[0] eq "current_player" && $cp[1] ne $active_player) {
         if ($active_player eq 'a'){
             $active_player = 'b';
@@ -165,9 +178,12 @@ while ($the_game_is_on) {
             $active_player = 'a'
         }
     } elsif ($cp[0] eq "won_by"){
+        $the_game_is_on = 0;
+        if($player_a->isComputer() && $player_b->isComputer()) {
+            print "Computer ", $cp[1], " won the game!\n";
+        }
         $player_a->inform_win($cp[1]);
         $player_b->inform_win($cp[1]);
-        $the_game_is_on = 0;
     }
 
 }
